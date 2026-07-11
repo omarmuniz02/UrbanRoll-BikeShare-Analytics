@@ -1,0 +1,155 @@
+-- =========================================================================
+-- Project: UrbanRoll Bike-Share Analytics Pipeline (2024)
+-- File: user_acquisition_mom.sql
+-- Author: Junior Data Analyst
+-- Date: July 2026
+-- Description: End-to-end SQL analysis script supporting the UrbanRoll 
+--              Executive Performance Insights Dashboard. Covers Data Cleaning,
+--              User Segmentation, Operational Pulse, Network Flow Modeling,
+--              and Growth Analytics.
+-- =========================================================================
+
+-- -------------------------------------------------------------------------
+-- STEP 1: DATA CLEANING & AUDITING (FALSE STARTS)
+-- Target Stakeholder: Data Engineering / Operations
+-- Objective: Identify potential system glitches, accidental unlocks, 
+--            or immediate cancellations (trips under 2 mins / 0 km).
+-- -------------------------------------------------------------------------
+
+SELECT 
+     COUNTIF(TIMESTAMP_DIFF(end_time, start_time, MINUTE) < 2) AS short_duration_trips,
+     COUNTIF(distance_km = 0) AS zero_distance_trips
+FROM `project-e9cf5e3a-dcbe-4faa-bad.babynames.rides`;
+
+
+-- -------------------------------------------------------------------------
+-- STEP 2: OPERATIONAL "PULSE" (HOURLY COMMUTE DEMAND MAP)
+-- Target Stakeholder: Logistics Scheduling Lead
+-- Objective: Extract transactional hours to identify system peaks and
+--            optimize manual rebalancing truck timelines.
+-- -------------------------------------------------------------------------
+
+SELECT 
+    EXTRACT(HOUR FROM start_time) AS hour_of_day,
+    COUNT(*) AS ride_count
+FROM `project-e9cf5e3a-dcbe-4faa-bad.babynames.rides` 
+GROUP BY hour_of_day
+ORDER BY hour_of_day;
+
+
+-- -------------------------------------------------------------------------
+-- STEP 3: USER SEGMENTATION & ENGAGEMENT METRICS
+-- Target Stakeholder: VP of Marketing / Product Team
+-- Objective: Compare operational strain, trip volumes, and average time-on-bike 
+--            across unique platform subscription layers.
+-- -------------------------------------------------------------------------
+
+SELECT
+    u.membership_level,
+    COUNT(r.ride_id) AS ride_count,
+    ROUND(AVG(r.distance_km), 2) AS avg_distance_km,
+    ROUND(AVG(TIMESTAMP_DIFF(r.end_time, r.start_time, MINUTE)), 1) AS avg_duration_minutes
+FROM `project-e9cf5e3a-dcbe-4faa-bad.babynames.rides` r
+JOIN `project-e9cf5e3a-dcbe-4faa-bad.babynames.users` u
+    ON r.user_id = u.user_id
+GROUP BY u.membership_level
+ORDER BY ride_count DESC;
+
+
+-- -------------------------------------------------------------------------
+-- STEP 4: TRIP DURATION BUCKETING
+-- Target Stakeholder: Fleet Allocation Lead
+-- Objective: Categorize ride profiles into micro, medium, and long tiers 
+--            to identify asset time constraints.
+-- -------------------------------------------------------------------------
+
+SELECT 
+    CASE
+        WHEN TIMESTAMP_DIFF(end_time, start_time, MINUTE) < 10 THEN 'Short (<10M)'
+        WHEN TIMESTAMP_DIFF(end_time, start_time, MINUTE) BETWEEN 11 AND 30 THEN 'Medium (11-30M)'
+        ELSE 'Long (+30M)' 
+    END AS ride_category,
+    COUNT(*) AS rides
+FROM `project-e9cf5e3a-dcbe-4faa-bad.babynames.rides`
+GROUP BY ride_category
+ORDER BY rides DESC;
+
+
+-- -------------------------------------------------------------------------
+-- STEP 5: GEOGRAPHIC CONSTRAINTS (POPULAR INITIATIONS)
+-- Target Stakeholder: Station Deployment Team
+-- Objective: List absolute destination departures to map general station load.
+-- -------------------------------------------------------------------------
+
+SELECT 
+    s.station_name,
+    COUNT(r.ride_id) AS total_starts
+FROM `project-e9cf5e3a-dcbe-4faa-bad.babynames.rides` r
+JOIN `project-e9cf5e3a-dcbe-4faa-bad.babynames.stations` s
+    ON r.start_station_id = s.station_id
+GROUP BY 1
+ORDER BY total_starts DESC;
+
+
+-- -------------------------------------------------------------------------
+-- STEP 6: STATION NET FLOW MODEL (INVENTORY ASYMMETRY)
+-- Target Stakeholder: VP of Operations
+-- Objective: Construct a directional supply model by mapping departures 
+--            against arrivals to explicitly identify network supply Sinks and Sources.
+-- -------------------------------------------------------------------------
+
+WITH departures AS (
+    SELECT 
+        start_station_id,
+        COUNT(*) AS total_departures
+    FROM `project-e9cf5e3a-dcbe-4faa-bad.babynames.rides`
+    GROUP BY 1
+),
+
+arrivals AS (
+    SELECT 
+        end_station_id,
+        COUNT(*) AS total_arrivals
+    FROM `project-e9cf5e3a-dcbe-4faa-bad.babynames.rides`
+    GROUP BY 1
+)
+
+SELECT 
+    s.station_name,
+    IFNULL(a.total_arrivals, 0) AS total_arrivals,
+    IFNULL(d.total_departures, 0) AS total_departures,
+    (IFNULL(a.total_arrivals, 0) - IFNULL(d.total_departures, 0)) AS net_flow
+FROM `project-e9cf5e3a-dcbe-4faa-bad.babynames.stations` s
+JOIN departures d
+    ON s.station_id = d.start_station_id
+JOIN arrivals a
+    ON s.station_id = a.end_station_id
+ORDER BY net_flow ASC; -- Heaviest inventory drains (Top Sources) rise to the top
+
+
+-- -------------------------------------------------------------------------
+-- STEP 7: GROWTH AND REGISTRATION VELOCITY MODELING
+-- Target Stakeholder: VP of Marketing
+-- Objective: Isolate month-over-month account creation fluctuations using 
+--            window functions, handling initial benchmarks via NULLIF.
+-- -------------------------------------------------------------------------
+
+WITH monthly_signups AS (
+    SELECT 
+        DATE_TRUNC(created_at, MONTH) AS signup_month,
+        COUNT(user_id) AS users
+    FROM `project-e9cf5e3a-dcbe-4faa-bad.babynames.users`
+    GROUP BY signup_month
+)
+
+SELECT 
+    signup_month,
+    users,
+    LAG(users) OVER(ORDER BY signup_month) AS prev_month_count,
+    ROUND(
+        (users - LAG(users) OVER(ORDER BY signup_month)) / 
+        NULLIF(LAG(users) OVER(ORDER BY signup_month), 0) * 100, 
+        2
+    ) AS mom_growth_pct
+FROM monthly_signups
+ORDER BY signup_month;
