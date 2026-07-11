@@ -177,5 +177,5 @@ The Net Flow model identifies stations requiring proactive intervention before s
 
 ## 📂 Project Files
 
-- [SQL Analysis Pipeline](sql/urbanroll_analysis_pipeline.sql)
+- [SQL Analysis Pipeline](sql/user_acquisition_mom.sql)
 - [Tableau Workbook (.twbx)](dashboard/Urbanroll_Excective_dashboard.twbx)
