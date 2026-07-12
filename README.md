@@ -12,7 +12,7 @@ Rather than simply reporting performance metrics, this project focuses on using 
 
 ---
 
-## 🧩 Business Context
+## Business Context
 
 UrbanRoll's leadership team approached the analysis from two different perspectives.
 
@@ -28,13 +28,13 @@ Although the concerns came from different departments, both pointed toward the s
 
 ---
 
-## 🎯 Project Goal
+## Project Goal
 
 Analyze trip activity and customer registration data to understand rider behavior, identify recurring station imbalances, evaluate customer adoption patterns, and recommend operational improvements that increase bike availability while reducing redistribution effort.
 
 ---
 
-## 🔍 Analysis Focus
+## Analysis Focus
 
 The project was built around four primary areas of analysis.
 
@@ -60,7 +60,7 @@ The project was built around four primary areas of analysis.
 
 ---
 
-## 🔗 Interactive Dashboard
+## Interactive Dashboard
 
 View the fully interactive dashboard on Tableau Public:
 
@@ -70,7 +70,7 @@ View the fully interactive dashboard on Tableau Public:
 
 # 📈 Analysis Results
 
-## 🚲 Daily Demand Patterns
+## Daily Demand Patterns
 
 **Key Metrics**
 - **Total Network Rides:** 14,894
@@ -82,7 +82,7 @@ The network functions primarily as a commuter transportation system rather than 
 
 ---
 
-## 👥 Rider Behavior
+## Rider Behavior
 
 Two distinct customer groups emerged.
 
@@ -101,7 +101,7 @@ Subscribers create predictable ride volume, while Casual riders occupy bikes for
 
 ---
 
-## 📍 Station Network Flow
+## Station Network Flow
 
 Using station arrivals and departures, I calculated Net Flow for every station.
 
@@ -122,7 +122,7 @@ Bike shortages are not random. Certain stations consistently lose inventory whil
 
 ---
 
-## 📈 Customer Acquisition
+## Customer Acquisition
 
 Customer registrations experienced rapid growth early in the year.
 - **February Signup Growth:** +219%
@@ -149,7 +149,7 @@ Launch onboarding campaigns that encourage new users to complete their first rid
 
 ---
 
-# 🚀 Business Impact
+# Business Impact
 
 This project demonstrates how operational data and customer analytics can be combined to support practical business decisions rather than simply report historical performance.
 
@@ -157,7 +157,7 @@ The Net Flow model identifies stations requiring proactive intervention before s
 
 ---
 
-## 📘 Key Metrics
+## Key Metrics
 
 - **Total Rides:** Total completed bike trips.
 - **Net Flow:** Arrivals minus departures for each station. Negative values indicate inventory loss, while positive values indicate bike accumulation.
